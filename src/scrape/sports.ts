@@ -4,13 +4,13 @@ import { ISport } from "../types";
 /**
  * Get all sports listed on NCAA website
  * @param browser Puppeteer Browser instance
- * @returns A list of sports and NCAA links
+ * @returns An arry of sports and NCAA links
  */
 async function scrapeSports(browser: Browser): Promise<ISport[]> {
   const page = await browser.newPage();
   const targetUrl = "https://www.ncaa.com/";
 
-  // Set screen size
+  // set screen size
   await page.setViewport({ width: 1080, height: 1024 });
   await page.goto(targetUrl, {
     waitUntil: "domcontentloaded",

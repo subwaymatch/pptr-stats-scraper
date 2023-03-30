@@ -15,7 +15,6 @@
   "devDependencies": {
     "@tsconfig/node18": "^1.0.1",
     "@types/node": "^18.15.11",
-    "@types/puppeteer": "^7.0.4",
     "jsdoc": "^4.0.2",
     "typescript": "^5.0.2"
   }
