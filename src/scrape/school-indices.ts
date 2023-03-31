@@ -90,6 +90,10 @@ async function getNextPageUrl(page: Page): Promise<string | null> {
   return nextPageUrl;
 }
 
+/**
+ * Save list of schools to database
+ * @param schoolIndices List of school indices
+ */
 async function updateDatabase(schoolIndices: SchoolIndex[]): Promise<void> {
   const result = await prisma.schoolIndex.createMany({
     data: schoolIndices,
