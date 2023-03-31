@@ -1,26 +1,28 @@
 import { Browser, Page } from "puppeteer";
-import { ISchoolIndex } from "../types";
 import { scrollToBottom, waitForTimeout } from "../utils/page";
+import { PrismaClient, SchoolIndex } from "@prisma/client";
+
+const prisma = new PrismaClient();
 
 /**
  * Get all schools listed on NCAA website
  * @param browser Puppeteer Browser instance
  * @returns An array of school index information
  */
-async function scrapeSchoolIndices(browser: Browser): Promise<ISchoolIndex[]> {
+async function scrapeSchoolIndices(browser: Browser): Promise<SchoolIndex[]> {
   const page = await browser.newPage();
-  let currentUrl = "https://www.ncaa.com/schools-index";
+  let navigateUrl: string | null = "https://www.ncaa.com/schools-index";
   const elementToWaitFor = "#schools-index > table tbody tr";
 
   // array to hold school indices information from each page
-  let schoolIndices: ISchoolIndex[] = [];
+  let schoolIndices: SchoolIndex[] = [];
   let numScrapedPages = 0;
 
   // set screen size
   await page.setViewport({ width: 1080, height: 1024 });
 
   do {
-    await page.goto(currentUrl, {
+    await page.goto(navigateUrl, {
       waitUntil: "domcontentloaded",
     });
     await page.waitForSelector(elementToWaitFor);
@@ -40,27 +42,33 @@ async function scrapeSchoolIndices(browser: Browser): Promise<ISchoolIndex[]> {
           const schoolIndexUrl = tr.cells[1].querySelector("a").href;
 
           // extract school's slug from the URL
-          const schoolIdRegex = /[^/]+$/;
+          const schoolIdRegex = /https:\/\/www\.ncaa\.com\/schools\/([\w-]+).*/;
 
-          // @ts-ignore URL is guaranteed to have a slug
-          // use slug as the school ID
-          const schoolId = schoolIdRegex.exec(schoolIndexUrl)[0];
+          // use slug as the ID
+          const schoolIdMatch = schoolIndexUrl.match(schoolIdRegex);
+          const schoolId = schoolIdMatch ? schoolIdMatch[1] : schoolIndexUrl;
 
           return {
             id: schoolId,
             iconUrl: schoolIconUrl,
             name: schoolName,
             url: schoolIndexUrl,
-          } as ISchoolIndex;
+          } as SchoolIndex;
         });
       }
     );
 
     schoolIndices = schoolIndices.concat(pageSchoolIndices);
     numScrapedPages += 1;
-  } while (await getNextPageUrl(page));
 
-  // console.log(schoolIndices);
+    // if next page exists, extract URL
+    navigateUrl = await getNextPageUrl(page);
+    navigateUrl = null;
+  } while (navigateUrl);
+
+  page.close();
+
+  await updateDatabase(schoolIndices);
 
   return schoolIndices;
 }
@@ -71,16 +79,24 @@ async function scrapeSchoolIndices(browser: Browser): Promise<ISchoolIndex[]> {
  * @returns URL of the next page or null if on the last page
  */
 async function getNextPageUrl(page: Page): Promise<string | null> {
-  let nextPageLinks = await page.$$eval(
-    ".school-pager aaa",
-    (anchorElements) => {
-      return anchorElements
-        .filter((el) => el.textContent == "Next ›")
-        .map((el) => el.href as string);
-    }
-  );
+  let nextPageLinks = await page.$$eval(".school-pager a", (anchorElements) => {
+    return anchorElements
+      .filter((el) => el.textContent == "Next ›")
+      .map((el) => el.href as string);
+  });
 
-  return nextPageLinks.length > 0 ? nextPageLinks[0] : null;
+  const nextPageUrl = nextPageLinks.length > 0 ? nextPageLinks[0] : null;
+
+  return nextPageUrl;
+}
+
+async function updateDatabase(schoolIndices: SchoolIndex[]): Promise<void> {
+  const result = await prisma.schoolIndex.createMany({
+    data: schoolIndices,
+    skipDuplicates: true,
+  });
+
+  console.log(`${result.count} school indices have been updated`);
 }
 
 export default scrapeSchoolIndices;

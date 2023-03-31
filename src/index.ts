@@ -5,8 +5,9 @@ import scrapeSchoolIndices from "./scrape/school-indices";
 (async () => {
   const browser = await puppeteer.launch({ headless: false });
 
-  // const sports = await scrapeSports(browser);
-  // console.log(sports);
+  // scrape list of sports
+  // await scrapeSports(browser);
 
-  const schools = await scrapeSchoolIndices(browser);
+  // scrape list of school indices
+  await scrapeSchoolIndices(browser);
 })();
