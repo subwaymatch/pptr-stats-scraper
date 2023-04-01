@@ -9,7 +9,7 @@ dotenv.config();
   const browser = await puppeteer.launch({ headless: false });
 
   // scrape list of sports
-  await scrapeSports(browser);
+  // await scrapeSports(browser);
 
   // scrape list of school indices
   await scrapeSchoolIndices(browser);

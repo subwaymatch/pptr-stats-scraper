@@ -14,10 +14,17 @@ model Sport {
   createdAt DateTime @default(now())
 }
 
-model SchoolIndex {
-  id        String   @id
-  name      String
-  iconUrl   String
-  url       String
-  createdAt DateTime @default(now())
+model School {
+  id          String   @id
+  name        String
+  conference  String?
+  nickname    String?
+  colors      String?
+  bgColor     String?
+  url         String?
+  ncaaUrl     String
+  twitterUrl  String?
+  facebookUrl String?
+  iconUrl     String
+  createdAt   DateTime @default(now())
 }

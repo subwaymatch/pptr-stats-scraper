@@ -1,6 +1,6 @@
 import { Browser, Page } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "../utils/page";
-import { PrismaClient, SchoolIndex } from "@prisma/client";
+import { PrismaClient, School } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { stringify } from "csv-stringify";
@@ -12,13 +12,13 @@ const prisma = new PrismaClient();
  * @param browser Puppeteer Browser instance
  * @returns An array of school index information
  */
-async function scrapeSchoolIndices(browser: Browser): Promise<SchoolIndex[]> {
+async function scrapeSchoolIndices(browser: Browser): Promise<School[]> {
   const page = await browser.newPage();
   let navigateUrl: string | null = "https://www.ncaa.com/schools-index";
   const elementToWaitFor = "#schools-index > table tbody tr";
 
   // array to hold school indices information from each page
-  let schoolIndices: SchoolIndex[] = [];
+  let schoolIndices: School[] = [];
   let numScrapedPages = 0;
 
   // set screen size
@@ -55,8 +55,8 @@ async function scrapeSchoolIndices(browser: Browser): Promise<SchoolIndex[]> {
             id: schoolId,
             iconUrl: schoolIconUrl,
             name: schoolName,
-            url: schoolIndexUrl,
-          } as SchoolIndex;
+            ncaaUrl: schoolIndexUrl,
+          } as School;
         });
       }
     );
@@ -66,7 +66,7 @@ async function scrapeSchoolIndices(browser: Browser): Promise<SchoolIndex[]> {
 
     // if next page exists, extract URL
     navigateUrl = await getNextPageUrl(page);
-    // navigateUrl = numScrapedPages <= 2 ? navigateUrl : null;
+    navigateUrl = numScrapedPages <= 2 ? navigateUrl : null;
   } while (navigateUrl);
 
   page.close();
@@ -98,8 +98,8 @@ async function getNextPageUrl(page: Page): Promise<string | null> {
  * Save a list of school indices to database
  * @param schoolIndices List of school indices
  */
-async function writeToDatabase(schoolIndices: SchoolIndex[]): Promise<void> {
-  const result = await prisma.schoolIndex.createMany({
+async function writeToDatabase(schoolIndices: School[]): Promise<void> {
+  const result = await prisma.school.createMany({
     data: schoolIndices,
     skipDuplicates: true,
   });
@@ -111,20 +111,20 @@ async function writeToDatabase(schoolIndices: SchoolIndex[]): Promise<void> {
  * Save a list of school indices to database
  * @param schoolIndices List of school indices
  */
-async function writeToCsv(schoolIndices: SchoolIndex[]): Promise<void> {
+async function writeToCsv(schoolIndices: School[]): Promise<void> {
   const outputDirectory = process.env.OUTPUT_DIR as string;
 
   if (!fs.existsSync(outputDirectory)) {
     fs.mkdirSync(outputDirectory);
   }
 
-  const filename = path.join(outputDirectory, "school-indices.csv");
+  const filename = path.join(outputDirectory, "schools.csv");
 
   return new Promise<void>((resolve, reject) => {
     const writableStream = fs.createWriteStream(filename, {
       flags: "w+",
     });
-    const columns = ["id", "name", "iconUrl", "url"];
+    const columns = ["id", "name", "iconUrl", "ncaaUrl"];
     const stringifier = stringify({ header: true, columns: columns });
 
     schoolIndices.forEach((o) => {
