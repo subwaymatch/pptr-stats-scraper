@@ -33,3 +33,12 @@ Here is a graphical illustration of the typical workflow for the Prisma Client (
 ```
 npx prisma migrate dev --name your-migration-name
 ```
+
+## Notes
+
+- Most athletics websites are powered by [SIDEARM Sports (by LEARFIELD)](https://sidearmsports.com/).
+  - These sites have similar URL structure.
+- Some athletics websites are powered by different platforms.
+  - Example: https://www.catholicathletics.com/ is powered by [Presto Sports](http://www.prestosports.com/).
+- Some links listed on NCAA are outdated.
+  - Example: [NCAA's Cheyney University of Pennsylvania page](https://www.ncaa.com/schools/cheyney) lists http://cheyneywolves.com/ as the athletics website. However, the correct URL is https://cheyneyathletics.com/.
