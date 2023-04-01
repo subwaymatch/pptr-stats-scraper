@@ -1,6 +1,9 @@
 import { Browser, Page } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "../utils/page";
 import { PrismaClient, SchoolIndex } from "@prisma/client";
+import fs from "fs";
+import path from "path";
+import { stringify } from "csv-stringify";
 
 const prisma = new PrismaClient();
 
@@ -63,12 +66,13 @@ async function scrapeSchoolIndices(browser: Browser): Promise<SchoolIndex[]> {
 
     // if next page exists, extract URL
     navigateUrl = await getNextPageUrl(page);
-    navigateUrl = null;
+    // navigateUrl = numScrapedPages <= 2 ? navigateUrl : null;
   } while (navigateUrl);
 
   page.close();
 
-  await updateDatabase(schoolIndices);
+  await writeToDatabase(schoolIndices);
+  await writeToCsv(schoolIndices);
 
   return schoolIndices;
 }
@@ -91,16 +95,49 @@ async function getNextPageUrl(page: Page): Promise<string | null> {
 }
 
 /**
- * Save list of schools to database
+ * Save a list of school indices to database
  * @param schoolIndices List of school indices
  */
-async function updateDatabase(schoolIndices: SchoolIndex[]): Promise<void> {
+async function writeToDatabase(schoolIndices: SchoolIndex[]): Promise<void> {
   const result = await prisma.schoolIndex.createMany({
     data: schoolIndices,
     skipDuplicates: true,
   });
 
   console.log(`${result.count} school indices have been updated`);
+}
+
+/**
+ * Save a list of school indices to database
+ * @param schoolIndices List of school indices
+ */
+async function writeToCsv(schoolIndices: SchoolIndex[]): Promise<void> {
+  const outputDirectory = process.env.OUTPUT_DIR as string;
+
+  if (!fs.existsSync(outputDirectory)) {
+    fs.mkdirSync(outputDirectory);
+  }
+
+  const filename = path.join(outputDirectory, "school-indices.csv");
+
+  return new Promise<void>((resolve, reject) => {
+    const writableStream = fs.createWriteStream(filename, {
+      flags: "w+",
+    });
+    const columns = ["id", "name", "iconUrl", "url"];
+    const stringifier = stringify({ header: true, columns: columns });
+
+    schoolIndices.forEach((o) => {
+      stringifier.write(o);
+    });
+    stringifier.end();
+    stringifier.pipe(writableStream);
+
+    writableStream.on("finish", resolve);
+    writableStream.on("error", reject);
+
+    console.log("Finished writing data");
+  });
 }
 
 export default scrapeSchoolIndices;

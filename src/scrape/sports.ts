@@ -1,5 +1,8 @@
 import { Browser } from "puppeteer";
 import { PrismaClient, Sport } from "@prisma/client";
+import fs from "fs";
+import path from "path";
+import { stringify } from "csv-stringify";
 
 const prisma = new PrismaClient();
 
@@ -25,7 +28,7 @@ async function scrapeSports(browser: Browser): Promise<Sport[]> {
         const url = link.href;
 
         // extract sports's slug from the URL
-        // the URL ends with the division if there are multiple divisions
+        // the URL appends the division if there are multiple divisions
         // such as DI, DII, DIII, etc
         // example 1: https://www.ncaa.com/sports/cross-country-men/d1
         // example 2: https://www.ncaa.com/sports/fencing
@@ -46,18 +49,56 @@ async function scrapeSports(browser: Browser): Promise<Sport[]> {
 
   page.close();
 
-  await updateDatabase(sports);
+  await writeToDatabase(sports);
+  await writeToCsv(sports);
 
   return sports;
 }
 
-async function updateDatabase(sports: Sport[]): Promise<void> {
+/**
+ * Save a list of sports to database
+ * @param schoolIndices List of sports
+ */
+async function writeToDatabase(sports: Sport[]): Promise<void> {
   const result = await prisma.sport.createMany({
     data: sports,
     skipDuplicates: true,
   });
 
-  console.log(`${result.count} school indices have been updated`);
+  console.log(`${result.count} sports have been updated`);
+}
+
+/**
+ * Save a list of sports to a CSV file
+ * @param sports List of sports
+ */
+async function writeToCsv(sports: Sport[]): Promise<void> {
+  const outputDirectory = process.env.OUTPUT_DIR as string;
+
+  if (!fs.existsSync(outputDirectory)) {
+    fs.mkdirSync(outputDirectory);
+  }
+
+  const filename = path.join(outputDirectory, "sports.csv");
+
+  return new Promise<void>((resolve, reject) => {
+    const writableStream = fs.createWriteStream(filename, {
+      flags: "w+",
+    });
+    const columns = ["id", "name", "url"];
+    const stringifier = stringify({ header: true, columns: columns });
+
+    sports.forEach((o) => {
+      stringifier.write(o);
+    });
+    stringifier.end();
+    stringifier.pipe(writableStream);
+
+    writableStream.on("finish", resolve);
+    writableStream.on("error", reject);
+
+    console.log("Finished writing data");
+  });
 }
 
 export default scrapeSports;
