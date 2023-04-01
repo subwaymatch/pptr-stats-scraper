@@ -18,6 +18,14 @@ Create an `.env` file in the root directory and add a database connection URL.
 DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 ```
 
+## Run scraping
+
+`npm start` will compile the Typescript files and run the main file (`index.js`).
+
+```
+npm start
+```
+
 ## Prisma
 
 [Prisma Client](https://www.prisma.io/client) is used to simplify database access and ensure type safety.
@@ -28,10 +36,24 @@ Here is a graphical illustration of the typical workflow for the Prisma Client (
 
 ![image](https://user-images.githubusercontent.com/1064036/229275903-c3006f99-fc48-4ce7-97a4-306f0dea3c09.png)
 
+### Generate client
+
+After making any changes to the `prisma/schema.prisma` file, run the `generate` command to update client files and types.
+
+```
+npx prisma generate
+```
+
 ### Apply migrations
 
 ```
 npx prisma migrate dev --name your-migration-name
+```
+
+Alternatively, push the changes to the database without creating a migration.
+
+```
+npx prisma db push
 ```
 
 ## Notes
@@ -42,3 +64,9 @@ npx prisma migrate dev --name your-migration-name
   - Example: https://www.catholicathletics.com/ is powered by [Presto Sports](http://www.prestosports.com/).
 - Some links listed on NCAA are outdated.
   - Example: [NCAA's Cheyney University of Pennsylvania page](https://www.ncaa.com/schools/cheyney) lists http://cheyneywolves.com/ as the athletics website. However, the correct URL is https://cheyneyathletics.com/.
+
+### Questions
+
+- Can an athlete switch sports?
+- Can an athlete play two or more sports?
+  - In other words, is player-to-sport always a one-to-one relationship?

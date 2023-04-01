@@ -12,7 +12,7 @@ dotenv.config();
   // await scrapeSports(browser);
 
   // scrape list of school indices
-  await scrapeSchoolIndices(browser);
+  // await scrapeSchoolIndices(browser);
 
   // close browser when done
   await browser.close();

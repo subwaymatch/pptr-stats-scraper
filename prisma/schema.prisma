@@ -8,14 +8,15 @@ datasource db {
 }
 
 model Sport {
-  id        String   @id
+  id        String    @id
   name      String
   url       String
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
+  athletes  Athlete[]
 }
 
 model School {
-  id          String   @id
+  id          String    @id
   name        String
   conference  String?
   nickname    String?
@@ -26,5 +27,23 @@ model School {
   twitterUrl  String?
   facebookUrl String?
   iconUrl     String
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
+  athletes    Athlete[]
+}
+
+model Athlete {
+  id           String  @id
+  sport        Sport   @relation(fields: [sportId], references: [id])
+  school       School  @relation(fields: [schoolId], references: [id])
+  schoolId     String
+  sportId      String
+  name         String
+  class        String?
+  hometown     String?
+  highSchool   String?
+  bioText      String?
+  rosterUrl    String?
+  twitterUrl   String?
+  instagramUrl String?
+  opendorseUrl String?
 }
