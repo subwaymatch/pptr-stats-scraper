@@ -1,5 +1,5 @@
 import { Browser, Page } from "puppeteer";
-import { scrollToBottom, waitForTimeout } from "../../utils/page";
+import { scrollToBottom, waitForTimeout } from "../../utils/browser-page";
 import { PrismaClient, Athlete } from "@prisma/client";
 import fs from "fs";
 import path from "path";

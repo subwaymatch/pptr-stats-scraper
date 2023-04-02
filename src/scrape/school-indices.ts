@@ -1,5 +1,5 @@
 import { Browser, Page } from "puppeteer";
-import { scrollToBottom, waitForTimeout } from "utils/page";
+import { scrollToBottom, waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, School } from "@prisma/client";
 import fs from "fs";
 import path from "path";
@@ -67,12 +67,14 @@ async function scrapeSchoolIndices(browser: Browser): Promise<School[]> {
     // if next page exists, extract URL
     navigateUrl = await getNextPageUrl(page);
 
-    // TODO: Use during testing to limit pagination
+    // TODO: Use the line below while testing to limit pagination
     // comment in production to scrape all pages
     // navigateUrl = numScrapedPages < 2 ? navigateUrl : null;
   } while (navigateUrl);
 
   await page.close();
+
+  console.log(`Scraped ${numScrapedPages} school index pages`);
 
   await writeToDatabase(schoolIndices);
   await writeToCsv(schoolIndices);

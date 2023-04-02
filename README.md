@@ -22,8 +22,8 @@ DATABASE_URL="postgresql://USER:PASSWORD@HOST:PORT/DATABASE"
 
 `npm start` will compile the Typescript files and run the main file (`index.js`).
 
-```
-npm start
+```bash
+$ npm start
 ```
 
 ## Prisma
@@ -40,20 +40,24 @@ Here is a graphical illustration of the typical workflow for the Prisma Client (
 
 After making any changes to the `prisma/schema.prisma` file, run the `generate` command to update client files and types.
 
-```
-npx prisma generate
+```bash
+$ npx prisma generate
 ```
 
 ### Apply migrations
 
-```
-npx prisma migrate dev --name your-migration-name
+```bash
+$ npx prisma migrate dev --name your-migration-name
 ```
 
 Alternatively, push the changes to the database without creating a migration.
 
-```
-npx prisma db push
+```bash
+# push schema to database without creating a migration entry
+$ npx prisma db push
+
+# connect database and add Prisma models to local schema
+$ npx prisma db pull
 ```
 
 ## Notes
