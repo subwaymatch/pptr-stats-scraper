@@ -1,6 +1,6 @@
 import puppeteer from "puppeteer";
-import scrapeSports from "src/scrape/sports";
-import scrapeSchoolIndices from "src/scrape/school-indices";
+import scrapeSports from "scrape/sports";
+import scrapeSchoolIndices from "scrape/school-indices";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -10,7 +10,7 @@ dotenv.config();
 
   // scrape list of sports
   // takes less than 30 seconds
-  // await scrapeSports(browser);
+  await scrapeSports(browser);
 
   // scrape list of school indices
   // takes a few minutes
