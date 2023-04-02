@@ -1,7 +1,6 @@
 {
   "extends": "@tsconfig/node18/tsconfig.json",
   "compilerOptions": {
-    "baseUrl": ".",
     "lib": ["es2022"],
     "outDir": "build",
     "rootDir": "src"

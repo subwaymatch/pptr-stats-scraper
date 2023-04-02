@@ -47,7 +47,7 @@ async function scrapeSports(browser: Browser): Promise<Sport[]> {
     }
   );
 
-  page.close();
+  await page.close();
 
   await writeToDatabase(sports);
   await writeToCsv(sports);

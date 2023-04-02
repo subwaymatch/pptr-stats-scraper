@@ -16,19 +16,28 @@ model Sport {
 }
 
 model School {
-  id          String    @id
-  name        String
-  conference  String?
-  nickname    String?
-  colors      String?
-  bgColor     String?
-  url         String?
-  ncaaUrl     String
-  twitterUrl  String?
-  facebookUrl String?
-  iconUrl     String
-  createdAt   DateTime  @default(now())
-  athletes    Athlete[]
+  id               String          @id
+  name             String
+  divisionLocation String?
+  conference       String?
+  nickname         String?
+  colors           String?
+  bgColor          String?
+  ncaaUrl          String
+  url              String?
+  websitePlatform  WebsitePlatform @default(UNCHECKED)
+  twitterUrl       String?
+  facebookUrl      String?
+  iconUrl          String
+  createdAt        DateTime        @default(now())
+  athletes         Athlete[]
+}
+
+enum WebsitePlatform {
+  SIDEARM_SPORTS
+  PRESTO
+  UNKNOWN
+  UNCHECKED
 }
 
 model Athlete {
