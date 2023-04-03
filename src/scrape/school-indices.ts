@@ -1,9 +1,6 @@
 import puppeteer, { Page } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, School } from "@prisma/client";
-import fs from "fs";
-import path from "path";
-import { stringify } from "csv-stringify";
 import config from "config";
 
 const prisma = new PrismaClient();
@@ -81,7 +78,6 @@ export async function scrapeSchoolIndices(): Promise<School[]> {
   console.log(`Scraped ${numScrapedPages} school index pages`);
 
   await writeToDatabase(schoolIndices);
-  await writeToCsv(schoolIndices);
 
   return schoolIndices;
 }
@@ -114,37 +110,4 @@ async function writeToDatabase(schoolIndices: School[]): Promise<void> {
   });
 
   console.log(`${result.count} school indices have been updated`);
-}
-
-/**
- * Save a list of school indices to database
- * @param schoolIndices List of school indices
- */
-async function writeToCsv(schoolIndices: School[]): Promise<void> {
-  const outputDirectory = process.env.OUTPUT_DIR as string;
-
-  if (!fs.existsSync(outputDirectory)) {
-    fs.mkdirSync(outputDirectory);
-  }
-
-  const filename = path.join(outputDirectory, "schools.csv");
-
-  return new Promise<void>((resolve, reject) => {
-    const writableStream = fs.createWriteStream(filename, {
-      flags: "w+",
-    });
-    const columns = ["id", "name", "iconUrl", "ncaaUrl"];
-    const stringifier = stringify({ header: true, columns: columns });
-
-    schoolIndices.forEach((o) => {
-      stringifier.write(o);
-    });
-    stringifier.end();
-    stringifier.pipe(writableStream);
-
-    writableStream.on("finish", resolve);
-    writableStream.on("error", reject);
-
-    console.log("Finished writing data");
-  });
 }

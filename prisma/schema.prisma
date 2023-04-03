@@ -52,7 +52,7 @@ model Athlete {
 
 enum WebsitePlatform {
   SIDEARM_SPORTS
-  PRESTO
+  PRESTO_SPORTS
   UNKNOWN
   UNCHECKED
 }

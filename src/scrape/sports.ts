@@ -1,8 +1,5 @@
 import puppeteer from "puppeteer";
 import { PrismaClient, Sport } from "@prisma/client";
-import fs from "fs";
-import path from "path";
-import { stringify } from "csv-stringify";
 import config from "config";
 
 const prisma = new PrismaClient();
@@ -54,7 +51,6 @@ export async function scrapeSports(): Promise<Sport[]> {
   await browser.close();
 
   await writeToDatabase(sports);
-  await writeToCsv(sports);
 
   return sports;
 }
@@ -70,37 +66,4 @@ async function writeToDatabase(sports: Sport[]): Promise<void> {
   });
 
   console.log(`${result.count} sports have been updated`);
-}
-
-/**
- * Save a list of sports to a CSV file
- * @param sports List of sports
- */
-async function writeToCsv(sports: Sport[]): Promise<void> {
-  const outputDirectory = process.env.OUTPUT_DIR as string;
-
-  if (!fs.existsSync(outputDirectory)) {
-    fs.mkdirSync(outputDirectory);
-  }
-
-  const filename = path.join(outputDirectory, "sports.csv");
-
-  return new Promise<void>((resolve, reject) => {
-    const writableStream = fs.createWriteStream(filename, {
-      flags: "w+",
-    });
-    const columns = ["id", "name", "url"];
-    const stringifier = stringify({ header: true, columns: columns });
-
-    sports.forEach((o) => {
-      stringifier.write(o);
-    });
-    stringifier.end();
-    stringifier.pipe(writableStream);
-
-    writableStream.on("finish", resolve);
-    writableStream.on("error", reject);
-
-    console.log("Finished writing data");
-  });
 }

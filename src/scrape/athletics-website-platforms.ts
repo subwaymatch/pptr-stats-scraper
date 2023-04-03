@@ -1,6 +1,6 @@
 import puppeteer, { Browser } from "puppeteer";
 import { waitForTimeout } from "@utils/browser-page";
-import { PrismaClient, Prisma, School } from "@prisma/client";
+import { PrismaClient, Prisma, School, WebsitePlatform } from "@prisma/client";
 import rgba2hex from "@utils/rgba2hex";
 import config from "config";
 
@@ -10,9 +10,9 @@ const MAX_RETRY_ON_FAILURE = 2;
 declare let window: any;
 
 /**
- * Scrape each school's NCAA profile page using pagination
+ * Scrape each school's website platform
  */
-export async function scrapeNCAASchoolProfiles(): Promise<void> {
+export async function scrapeWebsitePlatforms(): Promise<void> {
   const browser = await puppeteer.launch({
     headless: config.get("puppeteerConfig.headless"),
   });
@@ -21,7 +21,11 @@ export async function scrapeNCAASchoolProfiles(): Promise<void> {
   let queryObj: Prisma.SchoolFindManyArgs = {
     take: 10,
     where: {
-      conference: null,
+      AND: [
+        {
+          websitePlatform: WebsitePlatform.UNCHECKED,
+        },
+      ],
     },
   };
 
