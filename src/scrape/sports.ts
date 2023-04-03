@@ -3,6 +3,7 @@ import { PrismaClient, Sport } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { stringify } from "csv-stringify";
+import config from "config";
 
 const prisma = new PrismaClient();
 
@@ -11,7 +12,9 @@ const prisma = new PrismaClient();
  * @returns An arry of sports and NCAA links
  */
 export async function scrapeSports(): Promise<Sport[]> {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    headless: config.get("puppeteerConfig.headless"),
+  });
 
   const page = await browser.newPage();
   const targetUrl = "https://www.ncaa.com/";

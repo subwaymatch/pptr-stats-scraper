@@ -2,13 +2,12 @@ import { scrapeSports } from "@scrape/sports";
 import { scrapeSchoolIndices } from "@scrape/school-indices";
 import { scrapeNCAASchoolProfiles } from "@scrape/ncaa-school-profile";
 import dotenv from "dotenv";
-import { paginateWithCursorExample } from "@scrape/test";
 
 dotenv.config();
 
 (async () => {
   // scrape list of sports
-  // await scrapeSports();
+  await scrapeSports();
 
   // scrape list of school indices
   // await scrapeSchoolIndices();

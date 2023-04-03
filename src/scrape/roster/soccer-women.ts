@@ -1,18 +1,24 @@
-import { Browser, Page } from "puppeteer";
+import puppeteer, { Browser, Page } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "../../utils/browser-page";
 import { PrismaClient, Athlete } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { stringify } from "csv-stringify";
+import config from "config";
 
 const prisma = new PrismaClient();
+const sportId = "soccer-women";
 
 /**
- * Get all schools listed on NCAA website
+ * Scrape women's soccer athletes within a school
  * @param browser Puppeteer Browser instance
  * @returns An array of school index information
  */
-async function scrapeRoster(browser: Browser): Promise<Athlete[]> {
+export async function scrapeAthletes(schoolId: string): Promise<Athlete[]> {
+  const browser = await puppeteer.launch({
+    headless: config.get("puppeteerConfig.headless"),
+  });
+
   return [];
 }
 
@@ -24,5 +30,3 @@ async function scrapeRoster(browser: Browser): Promise<Athlete[]> {
 async function getNextPageUrl(page: Page): Promise<string | null> {
   return null;
 }
-
-export default scrapeRoster;

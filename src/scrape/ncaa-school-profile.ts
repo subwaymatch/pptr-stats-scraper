@@ -2,14 +2,20 @@ import puppeteer, { Browser } from "puppeteer";
 import { waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, Prisma, School } from "@prisma/client";
 import rgba2hex from "@utils/rgba2hex";
+import config from "config";
 
 const prisma = new PrismaClient();
 const MAX_RETRY_ON_FAILURE = 1;
 
 declare let window: any;
 
+/**
+ * Scrape each school's NCAA profile page using pagination
+ */
 export async function scrapeNCAASchoolProfiles(): Promise<void> {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    headless: config.get("puppeteerConfig.headless"),
+  });
 
   let results: School[] = [];
   let queryObj: Prisma.SchoolFindManyArgs = {

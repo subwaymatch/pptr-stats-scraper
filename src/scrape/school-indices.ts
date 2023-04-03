@@ -4,6 +4,7 @@ import { PrismaClient, School } from "@prisma/client";
 import fs from "fs";
 import path from "path";
 import { stringify } from "csv-stringify";
+import config from "config";
 
 const prisma = new PrismaClient();
 
@@ -12,7 +13,9 @@ const prisma = new PrismaClient();
  * @returns An array of school index information
  */
 export async function scrapeSchoolIndices(): Promise<School[]> {
-  const browser = await puppeteer.launch({ headless: false });
+  const browser = await puppeteer.launch({
+    headless: config.get("puppeteerConfig.headless"),
+  });
 
   const page = await browser.newPage();
   let navigateUrl: string | null = "https://www.ncaa.com/schools-index";
