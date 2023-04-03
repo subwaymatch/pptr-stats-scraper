@@ -1,14 +1,53 @@
 import { Browser } from "puppeteer";
-import { scrollToBottom, waitForTimeout } from "@utils/browser-page";
-import { PrismaClient, School } from "@prisma/client";
+import { waitForTimeout } from "@utils/browser-page";
+import { PrismaClient, Prisma, School } from "@prisma/client";
 import rgba2hex from "@utils/rgba2hex";
 
 const prisma = new PrismaClient();
 
 declare let window: any;
 
-async function scrapeNCAASchoolProfiles(browser: Browser): Promise<void> {
-  return;
+export async function scrapeNCAASchoolProfiles(
+  browser: Browser
+): Promise<void> {
+  let results: School[] = [];
+  let queryObj: Prisma.SchoolFindManyArgs = {
+    take: 10,
+    where: {
+      conference: null,
+    },
+  };
+
+  do {
+    results = await prisma.school.findMany(queryObj);
+
+    if (results.length > 0) {
+      queryObj.skip = 1;
+      queryObj.cursor = {
+        id: results[results.length - 1].id,
+      };
+    }
+
+    for (const school of results) {
+      let retryOnFailCount = 0;
+      let isSuccess = false;
+
+      while (retryOnFailCount < 3 && !isSuccess) {
+        try {
+          await scrapeNCAASchoolProfile(browser, school.id);
+
+          isSuccess = true;
+        } catch (e) {
+          console.error(e);
+          console.log(`ERROR: retrying ${school.id}`);
+          retryOnFailCount += 1;
+        }
+      }
+
+      // add timeout
+      await waitForTimeout(1000);
+    }
+  } while (results.length > 0);
 }
 
 /**
@@ -37,14 +76,17 @@ async function scrapeNCAASchoolProfile(
     return null;
   }
 
-  console.log(school);
-
   // set screen size
   await page.setViewport({ width: 1080, height: 1024 });
 
   await page.goto(navigateUrl, {
     waitUntil: "domcontentloaded",
   });
+
+  await page.waitForSelector(".school-links", {
+    timeout: 10000,
+  });
+  await waitForTimeout(2000);
 
   school.divisionLocation = await page.$eval(
     ".division-location",

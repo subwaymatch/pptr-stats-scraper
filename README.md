@@ -62,6 +62,12 @@ $ npx prisma db pull
 
 ## Notes
 
+- Some school profile pages are broken.
+  - Example 1: https://www.ncaa.com/schools/asbury
+  - Example 2: https://www.ncaa.com/schools/jwu-denver
+  - Example 3: https://www.ncaa.com/schools/md-east-shore
+- Some school profile pages have missing values.
+  - Example: https://www.ncaa.com/schools/armstrong does not have a value for "conference".
 - Most athletics websites are powered by [SIDEARM Sports (by LEARFIELD)](https://sidearmsports.com/).
   - These sites have similar URL structure.
 - Some athletics websites are powered by different platforms.
@@ -74,3 +80,7 @@ $ npx prisma db pull
 - Can an athlete switch sports?
 - Can an athlete play two or more sports?
   - In other words, is player-to-sport always a one-to-one relationship?
+
+### TODO
+
+- Exception handling when a page crashes
