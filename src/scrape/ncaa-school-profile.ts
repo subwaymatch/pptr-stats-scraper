@@ -1,14 +1,21 @@
 import { Browser } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, School } from "@prisma/client";
+import rgba2hex from "@utils/rgba2hex";
 
 const prisma = new PrismaClient();
 
+declare let window: any;
+
+async function scrapeNCAASchoolProfiles(browser: Browser): Promise<void> {
+  return;
+}
+
 /**
- * Get all schools listed on NCAA website
+ * Get information from a school's NCAA profile page
  * @param browser Puppeteer Browser instance
  * @param schoolId a school's unique NCAA identifier
- * @returns An array of school index information
+ * @returns school object
  */
 async function scrapeNCAASchoolProfile(
   browser: Browser,
@@ -48,9 +55,9 @@ async function scrapeNCAASchoolProfile(
   const schoolDetails = await page.$$eval(
     ".school-details > .dl-group",
     (dlGroups) => {
-      return dlGroups.reduce((schoolDetails, dlGroup) => {
-        const k = dlGroup.querySelector("dt").textContent.toLowerCase();
-        const v = dlGroup.querySelector("dd").textContent;
+      return dlGroups.reduce((schoolDetails, dlGroupEl) => {
+        const k = dlGroupEl.querySelector("dt").textContent.toLowerCase();
+        const v = dlGroupEl.querySelector("dd").textContent;
 
         schoolDetails[k] = v;
 
@@ -68,11 +75,44 @@ async function scrapeNCAASchoolProfile(
     }
   });
 
+  // school links in <div class="school links" />
+  const schoolLinks = await page.$$eval(
+    ".school-links ul > li > a",
+    (linkEls) => {
+      return linkEls.reduce((schoolLinks, el) => {
+        if (el.querySelector("span.icon-web")) {
+          schoolLinks["url"] = el.href;
+        } else if (el.querySelector("span.icon-twitter")) {
+          schoolLinks["twitterUrl"] = el.href;
+        } else if (el.querySelector("span.icon-facebook")) {
+          schoolLinks["facebookUrl"] = el.href;
+        }
+
+        return schoolLinks;
+      }, {});
+    }
+  );
+
+  ["url", "twitterUrl", "facebookUrl"].forEach((key) => {
+    // @ts-ignore
+    // false flag - school has already been null-checked
+    if (school.hasOwnProperty(key)) {
+      // @ts-ignore
+      school[key] = schoolLinks[key];
+    }
+  });
+
+  // school backgorund color
+  let bgColor = await page.$eval(".school-header", (el) =>
+    window.getComputedStyle(el).getPropertyValue("background-color")
+  );
+  bgColor = rgba2hex(bgColor);
+  school.bgColor = bgColor;
+
   page.close();
 
-  // await updateDatabase(school);
-
-  console.log(school);
+  await updateDatabase(school);
+  await waitForTimeout(1000);
 
   return school;
 }

@@ -17,7 +17,7 @@ dotenv.config();
   // takes a few minutes
   // await scrapeSchoolIndices(browser);
 
-  await scrapeNCAASchoolProfile(browser, "adelphi");
+  await scrapeNCAASchoolProfile(browser, "illinois");
 
   // close browser when done
   // await browser.close();
