@@ -10,7 +10,6 @@ import { scrollToBottom, waitForTimeout } from "./browser-page";
 export async function detectWebsitePlatform(
   page: Page
 ): Promise<WebsitePlatform> {
-  await waitForTimeout(1000);
   await scrollToBottom(page);
 
   if (await checkIfSidearmSports(page)) {
@@ -19,6 +18,8 @@ export async function detectWebsitePlatform(
     return WebsitePlatform.PRESTO_SPORTS;
   } else if (await checkIfStreamlineTechnologies(page)) {
     return WebsitePlatform.STREAMLINE_TECHNOLOGIES;
+  } else if (await checkIfWMTDigital(page)) {
+    return WebsitePlatform.WMT_DIGITAL;
   } else if (await checkIfWordpress(page)) {
     return WebsitePlatform.WORDPRESS;
   } else if (await checkIfDrupal(page)) {
@@ -49,6 +50,15 @@ async function checkIfPrestoSports(page: Page) {
 async function checkIfStreamlineTechnologies(page: Page) {
   try {
     await page.$eval('a[href*="streamlinetechnologies.com"]', (o) => o.href);
+    return true;
+  } catch (e) {
+    return false;
+  }
+}
+
+async function checkIfWMTDigital(page: Page) {
+  try {
+    await page.$eval('a[href*="wmt.digital"]', (o) => o.href);
     return true;
   } catch (e) {
     return false;

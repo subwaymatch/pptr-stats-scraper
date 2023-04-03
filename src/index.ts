@@ -30,12 +30,12 @@ dotenv.config();
   // await scrapeRoster("illinois");
 
   // update website platform information
-  // await scrapeAllWebsitePlatforms();
+  await scrapeAllWebsitePlatforms();
 
-  const browser = await puppeteer.launch({
-    headless: config.get("puppeteerConfig.headless"),
-  });
-  await scrapeWebsitePlatform(browser, "air-force");
+  // const browser = await puppeteer.launch({
+  //   headless: config.get("puppeteerConfig.headless"),
+  // });
+  // await scrapeWebsitePlatform(browser, "air-force");
 
   // await testQuery();
 

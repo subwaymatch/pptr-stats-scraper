@@ -81,6 +81,7 @@ export async function scrapeWebsitePlatform(
       await page.goto(school.url, {
         waitUntil: "domcontentloaded",
       });
+      await waitForTimeout(1000);
 
       const websitePlatform = await detectWebsitePlatform(page);
 
