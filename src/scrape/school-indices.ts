@@ -1,4 +1,4 @@
-import { Browser, Page } from "puppeteer";
+import puppeteer, { Page } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, School } from "@prisma/client";
 import fs from "fs";
@@ -9,10 +9,11 @@ const prisma = new PrismaClient();
 
 /**
  * Get all schools listed on NCAA website
- * @param browser Puppeteer Browser instance
  * @returns An array of school index information
  */
-async function scrapeSchoolIndices(browser: Browser): Promise<School[]> {
+export async function scrapeSchoolIndices(): Promise<School[]> {
+  const browser = await puppeteer.launch({ headless: false });
+
   const page = await browser.newPage();
   let navigateUrl: string | null = "https://www.ncaa.com/schools-index";
   const elementToWaitFor = "#schools-index > table tbody tr";
@@ -72,7 +73,7 @@ async function scrapeSchoolIndices(browser: Browser): Promise<School[]> {
     // navigateUrl = numScrapedPages < 2 ? navigateUrl : null;
   } while (navigateUrl);
 
-  await page.close();
+  await browser.close();
 
   console.log(`Scraped ${numScrapedPages} school index pages`);
 
@@ -144,5 +145,3 @@ async function writeToCsv(schoolIndices: School[]): Promise<void> {
     console.log("Finished writing data");
   });
 }
-
-export default scrapeSchoolIndices;

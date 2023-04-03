@@ -1,4 +1,4 @@
-import { Browser } from "puppeteer";
+import puppeteer from "puppeteer";
 import { PrismaClient, Sport } from "@prisma/client";
 import fs from "fs";
 import path from "path";
@@ -8,10 +8,11 @@ const prisma = new PrismaClient();
 
 /**
  * Get all sports listed on NCAA website
- * @param browser Puppeteer Browser instance
  * @returns An arry of sports and NCAA links
  */
-async function scrapeSports(browser: Browser): Promise<Sport[]> {
+export async function scrapeSports(): Promise<Sport[]> {
+  const browser = await puppeteer.launch({ headless: false });
+
   const page = await browser.newPage();
   const targetUrl = "https://www.ncaa.com/";
 
@@ -47,7 +48,7 @@ async function scrapeSports(browser: Browser): Promise<Sport[]> {
     }
   );
 
-  await page.close();
+  await browser.close();
 
   await writeToDatabase(sports);
   await writeToCsv(sports);
@@ -100,5 +101,3 @@ async function writeToCsv(sports: Sport[]): Promise<void> {
     console.log("Finished writing data");
   });
 }
-
-export default scrapeSports;
