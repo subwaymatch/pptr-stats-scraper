@@ -10,7 +10,7 @@ import { paginateWithCursorExample } from "@scrape/test";
 dotenv.config();
 
 (async () => {
-  const browser = await puppeteer.launch({ headless: true });
+  const browser = await puppeteer.launch({ headless: false });
 
   // scrape list of sports
   // takes less than 30 seconds
