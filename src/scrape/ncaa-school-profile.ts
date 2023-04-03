@@ -12,7 +12,7 @@ declare let window: any;
 /**
  * Scrape each school's NCAA profile page using pagination
  */
-export async function scrapeNCAASchoolProfiles(): Promise<void> {
+export async function scrapeAllNCAASchoolProfiles(): Promise<void> {
   const browser = await puppeteer.launch({
     headless: config.get("puppeteerConfig.headless"),
   });
@@ -49,7 +49,7 @@ export async function scrapeNCAASchoolProfiles(): Promise<void> {
  * @param schoolId a school's unique NCAA identifier
  * @returns school object
  */
-async function scrapeNCAASchoolProfile(
+export async function scrapeNCAASchoolProfile(
   browser: Browser,
   schoolId: string
 ): Promise<School | null> {
@@ -147,8 +147,7 @@ async function scrapeNCAASchoolProfile(
       bgColor = rgba2hex(bgColor);
       school.bgColor = bgColor;
 
-      page.close();
-
+      await page.close();
       await updateDatabase(school);
 
       isSuccess = true;
@@ -183,5 +182,3 @@ async function updateDatabase(school: School): Promise<void> {
     `${updatedSchool.id}'s NCAA profile information has been updated`
   );
 }
-
-export default scrapeNCAASchoolProfile;

@@ -1,18 +1,16 @@
 import puppeteer, { Browser } from "puppeteer";
 import { waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, Prisma, School, WebsitePlatform } from "@prisma/client";
-import rgba2hex from "@utils/rgba2hex";
 import config from "config";
+import { detectWebsitePlatform } from "@utils/website-platform";
 
 const prisma = new PrismaClient();
 const MAX_RETRY_ON_FAILURE = 2;
 
-declare let window: any;
-
 /**
  * Scrape each school's website platform
  */
-export async function scrapeWebsitePlatforms(): Promise<void> {
+export async function scrapeAllWebsitePlatforms(): Promise<void> {
   const browser = await puppeteer.launch({
     headless: config.get("puppeteerConfig.headless"),
   });
@@ -23,7 +21,13 @@ export async function scrapeWebsitePlatforms(): Promise<void> {
     where: {
       AND: [
         {
-          websitePlatform: WebsitePlatform.UNCHECKED,
+          OR: [
+            // { websitePlatform: WebsitePlatform.UNCHECKED },
+            { websitePlatform: WebsitePlatform.UNKNOWN },
+          ],
+        },
+        {
+          url: { not: null },
         },
       ],
     },
@@ -34,7 +38,7 @@ export async function scrapeWebsitePlatforms(): Promise<void> {
 
     if (results.length > 0) {
       for (const school of results) {
-        await scrapeNCAASchoolProfile(browser, school.id);
+        await scrapeWebsitePlatform(browser, school.id);
       }
 
       queryObj.skip = 1;
@@ -48,29 +52,21 @@ export async function scrapeWebsitePlatforms(): Promise<void> {
 }
 
 /**
- * Get information from a school's NCAA profile page
+ * Check and update an Athletic website's platform
  * @param browser Puppeteer Browser instance
  * @param schoolId a school's unique NCAA identifier
  * @returns school object
  */
-async function scrapeNCAASchoolProfile(
+export async function scrapeWebsitePlatform(
   browser: Browser,
   schoolId: string
 ): Promise<School | null> {
-  let navigateUrl: string = `https://www.ncaa.com/schools/${schoolId}`;
-
   // query school by ID
-  let school = await prisma.school.findUnique({
+  let school = await prisma.school.findUniqueOrThrow({
     where: {
       id: schoolId,
     },
   });
-
-  // if school ID is not found in DB, do nothing and return null
-  if (!school) {
-    console.error(`School ID: ${schoolId} not found in database`);
-    return null;
-  }
 
   let retryOnFailCount = 0;
   let isSuccess = false;
@@ -80,80 +76,20 @@ async function scrapeNCAASchoolProfile(
     try {
       // set screen size
       await page.setViewport({ width: 1080, height: 1024 });
-      await page.goto(navigateUrl, {
+      // @ts-ignore
+      // null urls are not returned from the prisma query
+      await page.goto(school.url, {
         waitUntil: "domcontentloaded",
       });
-      await page.waitForSelector(".school-links", {
-        timeout: 5000,
-      });
-      await waitForTimeout(2000);
 
-      school.divisionLocation = await page.$eval(
-        ".division-location",
-        (el) => el.innerText
-      );
+      const websitePlatform = await detectWebsitePlatform(page);
 
-      // school details in <dl> (description list) element
-      const schoolDetails = await page.$$eval(
-        ".school-details > .dl-group",
-        (dlGroups) => {
-          return dlGroups.reduce((schoolDetails, dlGroupEl) => {
-            const k = dlGroupEl.querySelector("dt").textContent.toLowerCase();
-            const v = dlGroupEl.querySelector("dd").textContent;
+      await page.close();
 
-            schoolDetails[k] = v;
-
-            return schoolDetails;
-          }, {});
-        }
-      );
-
-      ["conference", "nickname", "colors"].forEach((key) => {
-        // @ts-ignore
-        // false flag - school has already been null-checked
-        if (school.hasOwnProperty(key)) {
-          // @ts-ignore
-          school[key] = schoolDetails[key];
-        }
-      });
-
-      // school links in <div class="school links" />
-      const schoolLinks = await page.$$eval(
-        ".school-links ul > li > a",
-        (linkEls) => {
-          return linkEls.reduce((schoolLinks, el) => {
-            if (el.querySelector("span.icon-web")) {
-              schoolLinks["url"] = el.href;
-            } else if (el.querySelector("span.icon-twitter")) {
-              schoolLinks["twitterUrl"] = el.href;
-            } else if (el.querySelector("span.icon-facebook")) {
-              schoolLinks["facebookUrl"] = el.href;
-            }
-
-            return schoolLinks;
-          }, {});
-        }
-      );
-
-      ["url", "twitterUrl", "facebookUrl"].forEach((key) => {
-        // @ts-ignore
-        // false flag - school has already been null-checked
-        if (school.hasOwnProperty(key)) {
-          // @ts-ignore
-          school[key] = schoolLinks[key];
-        }
-      });
-
-      // school backgorund color
-      let bgColor = await page.$eval(".school-header", (el) =>
-        window.getComputedStyle(el).getPropertyValue("background-color")
-      );
-      bgColor = rgba2hex(bgColor);
-      school.bgColor = bgColor;
-
-      page.close();
-
-      await updateDatabase(school);
+      if (school.websitePlatform !== websitePlatform) {
+        school.websitePlatform = websitePlatform;
+        await updateDatabase(school);
+      }
 
       isSuccess = true;
     } catch (e) {
@@ -165,8 +101,6 @@ async function scrapeNCAASchoolProfile(
       retryOnFailCount += 1;
     }
   }
-
-  await waitForTimeout(1000);
 
   return school;
 }
@@ -184,8 +118,6 @@ async function updateDatabase(school: School): Promise<void> {
   });
 
   console.log(
-    `${updatedSchool.id}'s NCAA profile information has been updated`
+    `${updatedSchool.id}'s website platform has been updated to ${updatedSchool.websitePlatform}`
   );
 }
-
-export default scrapeNCAASchoolProfile;
