@@ -27,11 +27,12 @@ dotenv.config();
   // await scrapeNCAASchoolProfiles();
 
   // scrape athletes
-  // await scrapeRoster("illinois");
+  await scrapeRoster("illinois", "soccer-women");
 
-  // update website platform information
-  await scrapeAllWebsitePlatforms();
+  // update all websites' platform information
+  // await scrapeAllWebsitePlatforms();
 
+  // update a single website's platform information
   // const browser = await puppeteer.launch({
   //   headless: config.get("puppeteerConfig.headless"),
   // });

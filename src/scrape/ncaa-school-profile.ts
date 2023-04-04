@@ -3,6 +3,7 @@ import { waitForTimeout } from "@utils/browser-page";
 import { PrismaClient, Prisma, School } from "@prisma/client";
 import rgba2hex from "@utils/rgba2hex";
 import config from "config";
+import { getSchoolById, updateSchool } from "@models/schools";
 
 const prisma = new PrismaClient();
 const MAX_RETRY_ON_FAILURE = 2;
@@ -56,13 +57,7 @@ export async function scrapeNCAASchoolProfile(
   let navigateUrl: string = `https://www.ncaa.com/schools/${schoolId}`;
 
   // query school by ID
-  let school = await prisma.school.findUnique({
-    where: {
-      id: schoolId,
-    },
-  });
-
-  // if school ID is not found in DB, do nothing and return null
+  let school = await getSchoolById(schoolId);
   if (!school) {
     console.error(`School ID: ${schoolId} not found in database`);
     return null;
@@ -148,7 +143,7 @@ export async function scrapeNCAASchoolProfile(
       school.bgColor = bgColor;
 
       await page.close();
-      await updateDatabase(school);
+      await updateSchool(school);
 
       isSuccess = true;
     } catch (e) {
@@ -164,21 +159,4 @@ export async function scrapeNCAASchoolProfile(
   await waitForTimeout(1000);
 
   return school;
-}
-
-/**
- * Update school information
- * @param school school information
- */
-async function updateDatabase(school: School): Promise<void> {
-  const updatedSchool = await prisma.school.update({
-    where: {
-      id: school.id,
-    },
-    data: school,
-  });
-
-  console.log(
-    `${updatedSchool.id}'s NCAA profile information has been updated`
-  );
 }

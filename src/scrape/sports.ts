@@ -1,8 +1,7 @@
 import puppeteer from "puppeteer";
-import { PrismaClient, Sport } from "@prisma/client";
+import { Sport } from "@prisma/client";
 import config from "config";
-
-const prisma = new PrismaClient();
+import { createSports } from "@models/sports";
 
 /**
  * Get all sports listed on NCAA website
@@ -49,21 +48,7 @@ export async function scrapeSports(): Promise<Sport[]> {
   );
 
   await browser.close();
-
-  await writeToDatabase(sports);
+  await createSports(sports);
 
   return sports;
-}
-
-/**
- * Save a list of sports to database
- * @param schoolIndices List of sports
- */
-async function writeToDatabase(sports: Sport[]): Promise<void> {
-  const result = await prisma.sport.createMany({
-    data: sports,
-    skipDuplicates: true,
-  });
-
-  console.log(`${result.count} sports have been updated`);
 }

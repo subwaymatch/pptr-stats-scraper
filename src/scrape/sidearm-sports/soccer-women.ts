@@ -9,40 +9,34 @@ const prisma = new PrismaClient();
 const sportId = "soccer-women";
 
 /**
- * Scrape women's soccer athletes within a school
- * @param browser Puppeteer Browser instance
+ * Scrape women's soccer athletes for a specified school
+ * @param schoolId a school's unique NCAA identifier
  * @returns An array of school index information
  */
-export async function scrapeRoster(
-  schoolId: string,
-  sportId: string
-): Promise<Athlete[]> {
+export async function scrape(schoolId: string): Promise<Athlete[] | null> {
   const browser = await puppeteer.launch({
     headless: config.get("puppeteerConfig.headless"),
   });
 
   const school = await getSchoolById(schoolId);
-
-  if (!school || !school.url) {
-    const errorMsg = `${schoolId} is either missing in DB or does not have a valid Athletics website URL`;
-    console.error(errorMsg);
-    throw new Error(errorMsg);
+  if (!school) {
+    console.error(`School ID: ${schoolId} not found in database`);
+    return null;
   }
 
   const page = await browser.newPage();
   await page.setViewport({ width: 1080, height: 1024 });
-  await page.goto(school.url, {
+
+  const rosterUrl = new URL(
+    "sports/womens-soccer/roster",
+    school.url
+  ).toString();
+  console.log(`rosterUrl=${rosterUrl}`);
+  await page.goto(rosterUrl, {
     waitUntil: "domcontentloaded",
   });
-
-  await waitForTimeout(5000);
-
-  const websitePlatform = await detectWebsitePlatform(page);
-
-  console.log(`${schoolId} website platform: ${websitePlatform}`);
-
-  if (websitePlatform == WebsitePlatform.SIDEARM_SPORTS) {
-  }
+  await scrollToBottom(page);
+  await waitForTimeout(2000);
 
   browser.close();
 

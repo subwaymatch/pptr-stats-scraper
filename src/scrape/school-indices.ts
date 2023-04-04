@@ -1,9 +1,8 @@
 import puppeteer, { Page } from "puppeteer";
 import { scrollToBottom, waitForTimeout } from "@utils/browser-page";
-import { PrismaClient, School } from "@prisma/client";
+import { School } from "@prisma/client";
 import config from "config";
-
-const prisma = new PrismaClient();
+import { createSchools } from "@models/schools";
 
 /**
  * Get all schools listed on NCAA website
@@ -77,7 +76,7 @@ export async function scrapeSchoolIndices(): Promise<School[]> {
 
   console.log(`Scraped ${numScrapedPages} school index pages`);
 
-  await writeToDatabase(schoolIndices);
+  await createSchools(schoolIndices);
 
   return schoolIndices;
 }
@@ -97,17 +96,4 @@ async function getNextPageUrl(page: Page): Promise<string | null> {
   const nextPageUrl = nextPageLinks.length > 0 ? nextPageLinks[0] : null;
 
   return nextPageUrl;
-}
-
-/**
- * Save a list of school indices to database
- * @param schoolIndices List of school indices
- */
-async function writeToDatabase(schoolIndices: School[]): Promise<void> {
-  const result = await prisma.school.createMany({
-    data: schoolIndices,
-    skipDuplicates: true,
-  });
-
-  console.log(`${result.count} school indices have been updated`);
 }
